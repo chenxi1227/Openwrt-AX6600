@@ -110,7 +110,8 @@ jobs:
           else
             echo "WRT_PROFILE_DESC=纯净版，轻量稳定，仅含基础网络与常用管理插件，扩展插件按需自行安装" >> $GITHUB_ENV
           fi
-          echo "WRT_INFO=${WRT_SOURCE%%/*}" >> $GITHUB_ENV
+          WRT_INFO="${WRT_SOURCE%%/*}"
+          echo "WRT_INFO=$WRT_INFO" >> $GITHUB_ENV
           echo "WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./Config/$WRT_CONFIG.txt)" >> $GITHUB_ENV
           WRT_CACHE_ARCH=$(awk -F= '
             /^CONFIG_TARGET_[^=]+=y$/ {
