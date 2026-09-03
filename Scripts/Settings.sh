@@ -133,3 +133,24 @@ if target in content and "leds {" not in content:
     print("QCA8081 LED patch applied successfully!")
 ' "$DTS_FILE"
 fi
+
+# 解锁马来西亚 (MY) 的无线发射功率限制至 30 dBm
+REGDB_FILE=$(find ./package/firmware/wireless-regdb/ -name "db.txt" 2>/dev/null)
+if [ -f "$REGDB_FILE" ]; then
+    echo "Found $REGDB_FILE, unlocking MY regulatory power to 30 dBm..."
+    python3 -c '
+import sys, re
+path = sys.argv[1]
+with open(path, "r") as f:
+    text = f.read()
+# 找到 country MY: 段落，将其中的 (24)、(20)、(23) 全部替换为 (30)
+def unlock_my(match):
+    block = match.group(0)
+    block = re.sub(r"\((20|23|24)\)", "(30)", block)
+    return block
+text = re.sub(r"country MY:.*?(?=country |\Z)", unlock_my, text, flags=re.DOTALL)
+with open(path, "w") as f:
+    f.write(text)
+print("MY regulatory power successfully unlocked to 30 dBm!")
+' "$REGDB_FILE"
+fi
