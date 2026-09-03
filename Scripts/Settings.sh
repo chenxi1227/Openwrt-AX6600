@@ -93,3 +93,43 @@ else
         echo "Memory patch: current value ($CURRENT_VAL) is sufficient, skipped."
     fi
 fi
+
+# 修复雅典娜 AX6600 2.5G 网口 (QCA8081) LED 不亮问题
+DTS_FILE=$(find ./target/linux/qualcommax/ -name "ipq6010-re-cs-02.dts" 2>/dev/null)
+if [ -f "$DTS_FILE" ]; then
+    echo "Found $DTS_FILE, patching QCA8081 LEDs..."
+    python3 -c '
+import sys
+path = sys.argv[1]
+with open(path, "r") as f:
+    content = f.read()
+
+target = "reset-gpios = <&tlmm 77 GPIO_ACTIVE_LOW>;"
+led_patch = """reset-gpios = <&tlmm 77 GPIO_ACTIVE_LOW>;
+
+\t\tleds {
+\t\t\t#address-cells = <1>;
+\t\t\t#size-cells = <0>;
+
+\t\t\tled@0 {
+\t\t\t\treg = <0>;
+\t\t\t\tcolor = <LED_COLOR_ID_GREEN>;
+\t\t\t\tfunction = LED_FUNCTION_WAN;
+\t\t\t\tdefault-state = "keep";
+\t\t\t};
+
+\t\t\tled@1 {
+\t\t\t\treg = <1>;
+\t\t\t\tcolor = <LED_COLOR_ID_AMBER>;
+\t\t\t\tfunction = LED_FUNCTION_WAN;
+\t\t\t\tdefault-state = "keep";
+\t\t\t};
+\t\t};"""
+
+if target in content and "leds {" not in content:
+    content = content.replace(target, led_patch, 1)
+    with open(path, "w") as f:
+        f.write(content)
+    print("QCA8081 LED patch applied successfully!")
+' "$DTS_FILE"
+fi
