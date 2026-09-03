@@ -154,3 +154,18 @@ with open(path, "w") as f:
 print("MY regulatory power successfully unlocked to 30 dBm!")
 ' "$REGDB_FILE"
 fi
+
+# ==========================================
+# 终极暴力破解：完全重写无线管制数据库 (US / MY / 00)
+# 解锁 1~13 全信道、解锁全 5G 频段、剔除 DFS 雷达等待、拉满 30 dBm
+# ==========================================
+REG_MK="package/firmware/wireless-regdb/Makefile"
+if [ -f "$REG_MK" ]; then
+    echo "Patching $REG_MK to completely unlock regulatory rules..."
+    sed -i '/Build\/Compile/i \
+define Build\/Prepare\
+\t$(call Build\/Prepare\/Default)\
+\tpython3 -c '\''import re, sys; p = "$(PKG_BUILD_DIR)/db.txt"; f = open(p, "r").read(); f = re.sub(r"country (US|MY|00):.*?(?=country |\\Z)", r"country \\1: DFS-FCC\\n\\t(2400 - 2483.5 @ 40), (30)\\n\\t(5150 - 5850 @ 160), (30)\\n\\n", f, flags=re.DOTALL); open(p, "w").write(f)'\''\
+endef\
+' "$REG_MK"
+fi
